@@ -1,1 +1,1 @@
-# A ROS interface for Universal Robots
+# A ROS interface for multiple Universal Robots
