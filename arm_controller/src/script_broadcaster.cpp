@@ -19,6 +19,7 @@ class ScriptController {
   ros::Subscriber cmd_sub_;
 
   std_msgs::String ur_script_;
+  float joystick_buffer_[6] = {0, 0, 0, 0, 0, 0};
   // ServoC parameters
   double acc_;     // tool acceleration [m/s^2]
   double vel_;     // tool speed [m/s]
@@ -55,12 +56,21 @@ ScriptController::ScriptController() {
 }
 
 void ScriptController::joy_callback(const sensor_msgs::Joy::ConstPtr &msg) {
-  dx_ += msg->axes[0] * 0.001;
-  dy_ += 0;
-  dz_ += 0;
-  drx_ += 0;
-  dry_ += 0;
-  drz_ += 0;
+  joystick_buffer_[0] = msg->axes[0];
+  joystick_buffer_[1] = msg->axes[1];
+  joystick_buffer_[2] = (msg->axes[2] - msg->axes[5]) / 2;
+  joystick_buffer_[3] = msg->axes[3];
+  joystick_buffer_[4] = msg->axes[4];
+  joystick_buffer_[5] = msg->axes[6];
+
+  if (msg->buttons[0] == 1) {
+    dx_ = 0;
+    dy_ = 0;
+    dz_ = 0;
+    drx_ = 0;
+    dry_ = 0;
+    drz_ = 0;
+  }
 }
 
 // servoc(pose, a=1.2, v=0.25, r=0)
@@ -71,6 +81,12 @@ void ScriptController::set_param(double acc, double vel, double radius) {
 }
 
 void ScriptController::pub_scirpt() {
+  dx_ += joystick_buffer_[0] * 0.001;
+  dy_ += joystick_buffer_[1] * 0.001;
+  dz_ += joystick_buffer_[2] * 0.001;
+  drx_ += joystick_buffer_[3] * 0.001;
+  dry_ += joystick_buffer_[4] * 0.001;
+  drz_ += joystick_buffer_[5] * 0.001;
   ur_script_.data =
       "servoc(p[" + std::to_string(x_ + dx_) + "," + std::to_string(y_ + dy_) +
       "," + std::to_string(z_ + dz_) + "," + std::to_string(rx_ + drx_) + "," +
@@ -83,11 +99,11 @@ void ScriptController::pub_scirpt() {
 int main(int argc, char **argv) {
   // Initiate ROS
   ros::init(argc, argv, "script_br_node");
-  ros::Rate rate(125);  // 125 Hz
 
   // Create an object of class Multiplexer that will take care of everything
   ScriptController ScriptController;
   ROS_INFO("Script Controller ready");
+  ros::Rate rate(125);  // 125 Hz
   while (ros::ok()) {
     ScriptController.pub_scirpt();
     ros::spinOnce();
