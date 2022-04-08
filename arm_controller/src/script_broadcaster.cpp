@@ -2,12 +2,16 @@
 #include <sensor_msgs/Joy.h>
 #include <std_msgs/String.h>
 #include <std_srvs/SetBool.h>
+#include <geometry_msgs/Pose.h>
+
+const double deg2rad = 0.0174533;
 
 class ScriptController {
  public:
   ScriptController();
   void set_param(double acc, double vel, double radius);
   void joy_callback(const sensor_msgs::Joy::ConstPtr &msg);
+  void cmd_callback(const geometry_msgs::Pose::ConstPtr &msg);
   void pub_scirpt_speedl();
   void pub_scirpt_servoc();
 
@@ -35,12 +39,14 @@ ScriptController::ScriptController() {
       "ur_hardware_interface/script_command", 1);
   joy_sub_ = nh_.subscribe<sensor_msgs::Joy>(
       "/joy", 1, &ScriptController::joy_callback, this);
+  cmd_sub_ = nh_.subscribe<geometry_msgs::Pose>(
+      "pose_cmd", 1, &ScriptController::cmd_callback, this);
   send_script_ = false;
 
   // default config
-  acc_ = 1.2;
-  vel_ = 0.25;
-  radius_ = 0.01;
+  acc_ = 0.01;
+  vel_ = 0.02;
+  radius_ = 0.0001;
   x_ = 0.15;
   y_ = -0.20;
   z_ = 0.45;
@@ -74,6 +80,15 @@ void ScriptController::joy_callback(const sensor_msgs::Joy::ConstPtr &msg) {
   }
 }
 
+void ScriptController::cmd_callback(const geometry_msgs::Pose::ConstPtr &msg) {
+  x_ = msg->position.x;
+  y_ = msg->position.y;
+  z_ = msg->position.z;
+  rx_ = 0;
+  ry_ = 0;
+  rz_ = 0;
+}
+
 // servoc(pose, a=1.2, v=0.25, r=0)
 void ScriptController::set_param(double acc, double vel, double radius) {
   acc_ = acc;
@@ -93,17 +108,18 @@ void ScriptController::pub_scirpt_speedl() {
   ur_script_.data = "speedl([" + std::to_string(dx_) + "," +
                     std::to_string(dy_) + "," + std::to_string(dz_) + "," +
                     std::to_string(drx_) + "," + std::to_string(dry_) + "," +
-                    std::to_string(drz_) + "], 0.5, 0.05, 0.5)";
+                    std::to_string(drz_) +
+                    "], 0.5, 0.05, 0.5)";  // publish at 50 Hz
   urscript_pub_.publish(ur_script_);
 }
 
 void ScriptController::pub_scirpt_servoc() {
-  dx_ += joystick_buffer_[0] * 0.0001;
-  dy_ += joystick_buffer_[1] * 0.0001;
-  dz_ += joystick_buffer_[2] * 0.0001;
-  drx_ += joystick_buffer_[3] * 0.0001;
-  dry_ += joystick_buffer_[4] * 0.0001;
-  drz_ += joystick_buffer_[5] * 0.0001;
+  dx_ += joystick_buffer_[0] * 0.01;
+  dy_ += joystick_buffer_[1] * 0.01;
+  dz_ += joystick_buffer_[2] * 0.01;
+  drx_ += joystick_buffer_[3] * 0.01;
+  dry_ += joystick_buffer_[4] * 0.01;
+  drz_ += joystick_buffer_[5] * 0.01;
   ur_script_.data =
       "servoc(p[" + std::to_string(x_ + dx_) + "," + std::to_string(y_ + dy_) +
       "," + std::to_string(z_ + dz_) + "," + std::to_string(rx_ + drx_) + "," +
