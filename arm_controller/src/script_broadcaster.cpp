@@ -93,7 +93,7 @@ void ScriptController::pub_scirpt_speedl() {
   ur_script_.data = "speedl([" + std::to_string(dx_) + "," +
                     std::to_string(dy_) + "," + std::to_string(dz_) + "," +
                     std::to_string(drx_) + "," + std::to_string(dry_) + "," +
-                    std::to_string(drz_) + "], 0.5, 0.5, 0.02)";
+                    std::to_string(drz_) + "], 0.5, 0.05, 0.5)";
   urscript_pub_.publish(ur_script_);
 }
 
