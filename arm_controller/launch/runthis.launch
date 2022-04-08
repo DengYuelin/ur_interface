@@ -4,6 +4,7 @@
             <param name='dev' type='string' value='/dev/input/js0'/>
         </node>
     </group>
-
-    <node pkg="arm_controller" type="script_br_node" name="script_br" output="screen" />
+    <group ns="left">
+        <node pkg="arm_controller" type="script_br_node" name="script_br" output="screen" />
+    </group>
 </launch>

@@ -8,7 +8,8 @@ class ScriptController {
   ScriptController();
   void set_param(double acc, double vel, double radius);
   void joy_callback(const sensor_msgs::Joy::ConstPtr &msg);
-  void pub_scirpt();
+  void pub_scirpt_speedl();
+  void pub_scirpt_servoc();
 
  private:
   bool send_script_;
@@ -39,10 +40,10 @@ ScriptController::ScriptController() {
   // default config
   acc_ = 1.2;
   vel_ = 0.25;
-  radius_ = 0;
-  x_ = 0;
-  y_ = 0;
-  z_ = 0;
+  radius_ = 0.01;
+  x_ = 0.15;
+  y_ = -0.20;
+  z_ = 0.45;
   rx_ = 0;
   ry_ = 0;
   rz_ = 0;
@@ -80,13 +81,29 @@ void ScriptController::set_param(double acc, double vel, double radius) {
   radius_ = radius;
 }
 
-void ScriptController::pub_scirpt() {
-  dx_ += joystick_buffer_[0] * 0.001;
-  dy_ += joystick_buffer_[1] * 0.001;
-  dz_ += joystick_buffer_[2] * 0.001;
-  drx_ += joystick_buffer_[3] * 0.001;
-  dry_ += joystick_buffer_[4] * 0.001;
-  drz_ += joystick_buffer_[5] * 0.001;
+// Joystick control using speedl
+void ScriptController::pub_scirpt_speedl() {
+  dx_ = joystick_buffer_[0] * 0.01;
+  dy_ = joystick_buffer_[1] * 0.01;
+  dz_ = joystick_buffer_[2] * 0.01;
+  drx_ = joystick_buffer_[3] * 0.1;
+  dry_ = joystick_buffer_[4] * 0.1;
+  drz_ = joystick_buffer_[5] * 0.1;
+
+  ur_script_.data = "speedl([" + std::to_string(dx_) + "," +
+                    std::to_string(dy_) + "," + std::to_string(dz_) + "," +
+                    std::to_string(drx_) + "," + std::to_string(dry_) + "," +
+                    std::to_string(drz_) + "], 0.5, 0.5, 0.02)";
+  urscript_pub_.publish(ur_script_);
+}
+
+void ScriptController::pub_scirpt_servoc() {
+  dx_ += joystick_buffer_[0] * 0.0001;
+  dy_ += joystick_buffer_[1] * 0.0001;
+  dz_ += joystick_buffer_[2] * 0.0001;
+  drx_ += joystick_buffer_[3] * 0.0001;
+  dry_ += joystick_buffer_[4] * 0.0001;
+  drz_ += joystick_buffer_[5] * 0.0001;
   ur_script_.data =
       "servoc(p[" + std::to_string(x_ + dx_) + "," + std::to_string(y_ + dy_) +
       "," + std::to_string(z_ + dz_) + "," + std::to_string(rx_ + drx_) + "," +
@@ -103,9 +120,9 @@ int main(int argc, char **argv) {
   // Create an object of class Multiplexer that will take care of everything
   ScriptController ScriptController;
   ROS_INFO("Script Controller ready");
-  ros::Rate rate(125);  // 125 Hz
+  ros::Rate rate(50);  // [Hz]
   while (ros::ok()) {
-    ScriptController.pub_scirpt();
+    ScriptController.pub_scirpt_speedl();
     ros::spinOnce();
     rate.sleep();
   }
