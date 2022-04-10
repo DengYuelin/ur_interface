@@ -83,7 +83,7 @@ int ScriptController::get_rate() {
 }
 
 void ScriptController::joy_callback(const sensor_msgs::Joy::ConstPtr &msg) {
-  joystick_buffer_[0] = -msg->axes[0];
+  joystick_buffer_[0] = msg->axes[0];
   joystick_buffer_[1] = msg->axes[1];
   joystick_buffer_[2] = (msg->axes[2] - msg->axes[5]) / 2;
   joystick_buffer_[3] = msg->axes[3];
@@ -118,11 +118,11 @@ void ScriptController::set_param(double acc, double vel, double radius) {
 
 // Joystick control using speedl
 void ScriptController::pub_scirpt_speedl() {
-  dx_ = joystick_buffer_[0] * 0.03;
+  dx_ = -joystick_buffer_[0] * 0.03;
   dy_ = joystick_buffer_[1] * 0.03;
   dz_ = joystick_buffer_[2] * 0.03;
-  drx_ = joystick_buffer_[3] * 0.1;
-  dry_ = joystick_buffer_[4] * 0.1;
+  drx_ = joystick_buffer_[4] * 0.1;
+  dry_ = joystick_buffer_[3] * 0.1;
   drz_ = joystick_buffer_[5] * 0.1;
 
   ur_script_.data = "speedl([" + std::to_string(dx_) + "," +
@@ -133,11 +133,11 @@ void ScriptController::pub_scirpt_speedl() {
 }
 
 void ScriptController::pub_scirpt_servoc() {
-  // dx_ += joystick_buffer_[0] * 0.01;
+  // dx_ += -joystick_buffer_[0] * 0.01;
   // dy_ += joystick_buffer_[1] * 0.01;
   // dz_ += joystick_buffer_[2] * 0.01;
-  // drx_ += joystick_buffer_[3] * 0.01;
-  // dry_ += joystick_buffer_[4] * 0.01;
+  // drx_ += joystick_buffer_[4] * 0.01;
+  // dry_ += joystick_buffer_[3] * 0.01;
   // drz_ += joystick_buffer_[5] * 0.01;
   ur_script_.data =
       "servoc(p[" + std::to_string(x_ + dx_) + "," + std::to_string(y_ + dy_) +
