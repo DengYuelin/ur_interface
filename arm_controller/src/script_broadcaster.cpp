@@ -121,8 +121,8 @@ void ScriptController::pub_scirpt_speedl() {
   dx_ = -joystick_buffer_[0] * 0.03;
   dy_ = joystick_buffer_[1] * 0.03;
   dz_ = joystick_buffer_[2] * 0.03;
-  drx_ = joystick_buffer_[4] * 0.1;
-  dry_ = joystick_buffer_[3] * 0.1;
+  drx_ = -joystick_buffer_[4] * 0.1;
+  dry_ = -joystick_buffer_[3] * 0.1;
   drz_ = joystick_buffer_[5] * 0.1;
 
   ur_script_.data = "speedl([" + std::to_string(dx_) + "," +
