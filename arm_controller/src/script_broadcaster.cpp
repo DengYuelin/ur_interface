@@ -12,11 +12,14 @@ class ScriptController {
   void set_param(double acc, double vel, double radius);
   void joy_callback(const sensor_msgs::Joy::ConstPtr &msg);
   void cmd_callback(const geometry_msgs::Pose::ConstPtr &msg);
+  int get_rate();
   void pub_scirpt_speedl();
   void pub_scirpt_servoc();
+  void pub_scirpt();
 
  private:
   bool send_script_;
+  int controller_mode;  // choose between different script controllers
 
   ros::NodeHandle nh_;
   ros::Publisher urscript_pub_;
@@ -43,16 +46,24 @@ ScriptController::ScriptController() {
       "pose_cmd", 1, &ScriptController::cmd_callback, this);
   send_script_ = false;
 
+  if (nh_.getParam("controller_mode", controller_mode)) {
+    ROS_INFO("Controller mode selected: Mode %d", controller_mode);
+  } else {
+    controller_mode = 0;
+    ROS_WARN("Default controller selected");
+  }
+
   // default config
   acc_ = 0.01;
   vel_ = 0.02;
   radius_ = 0.0001;
-  x_ = 0.15;
-  y_ = -0.20;
-  z_ = 0.45;
-  rx_ = 0;
-  ry_ = 0;
-  rz_ = 0;
+  nh_.param<double>("default_pose/x", x_, 0.0);
+  nh_.param<double>("default_pose/y", y_, 0.0);
+  nh_.param<double>("default_pose/z", z_, 0.0);
+  nh_.param<double>("default_pose/rx", rx_, 0.0);
+  nh_.param<double>("default_pose/ry", ry_, 0.0);
+  nh_.param<double>("default_pose/rz", rz_, 0.0);
+
   // default offset is zero
   dx_ = 0;
   dy_ = 0;
@@ -62,8 +73,17 @@ ScriptController::ScriptController() {
   drz_ = 0;
 }
 
+int ScriptController::get_rate() {
+  if (controller_mode == 0)       // speedl
+    return 50;                    // publish at 50 Hz
+  else if (controller_mode == 1)  // servoc
+    return 20;
+  else
+    return 125;
+}
+
 void ScriptController::joy_callback(const sensor_msgs::Joy::ConstPtr &msg) {
-  joystick_buffer_[0] = msg->axes[0];
+  joystick_buffer_[0] = -msg->axes[0];
   joystick_buffer_[1] = msg->axes[1];
   joystick_buffer_[2] = (msg->axes[2] - msg->axes[5]) / 2;
   joystick_buffer_[3] = msg->axes[3];
@@ -98,9 +118,9 @@ void ScriptController::set_param(double acc, double vel, double radius) {
 
 // Joystick control using speedl
 void ScriptController::pub_scirpt_speedl() {
-  dx_ = joystick_buffer_[0] * 0.01;
-  dy_ = joystick_buffer_[1] * 0.01;
-  dz_ = joystick_buffer_[2] * 0.01;
+  dx_ = joystick_buffer_[0] * 0.03;
+  dy_ = joystick_buffer_[1] * 0.03;
+  dz_ = joystick_buffer_[2] * 0.03;
   drx_ = joystick_buffer_[3] * 0.1;
   dry_ = joystick_buffer_[4] * 0.1;
   drz_ = joystick_buffer_[5] * 0.1;
@@ -108,18 +128,17 @@ void ScriptController::pub_scirpt_speedl() {
   ur_script_.data = "speedl([" + std::to_string(dx_) + "," +
                     std::to_string(dy_) + "," + std::to_string(dz_) + "," +
                     std::to_string(drx_) + "," + std::to_string(dry_) + "," +
-                    std::to_string(drz_) +
-                    "], 0.5, 0.05, 0.5)";  // publish at 50 Hz
+                    std::to_string(drz_) + "], 0.5, 0.05, 0.5)";
   urscript_pub_.publish(ur_script_);
 }
 
 void ScriptController::pub_scirpt_servoc() {
-  dx_ += joystick_buffer_[0] * 0.01;
-  dy_ += joystick_buffer_[1] * 0.01;
-  dz_ += joystick_buffer_[2] * 0.01;
-  drx_ += joystick_buffer_[3] * 0.01;
-  dry_ += joystick_buffer_[4] * 0.01;
-  drz_ += joystick_buffer_[5] * 0.01;
+  // dx_ += joystick_buffer_[0] * 0.01;
+  // dy_ += joystick_buffer_[1] * 0.01;
+  // dz_ += joystick_buffer_[2] * 0.01;
+  // drx_ += joystick_buffer_[3] * 0.01;
+  // dry_ += joystick_buffer_[4] * 0.01;
+  // drz_ += joystick_buffer_[5] * 0.01;
   ur_script_.data =
       "servoc(p[" + std::to_string(x_ + dx_) + "," + std::to_string(y_ + dy_) +
       "," + std::to_string(z_ + dz_) + "," + std::to_string(rx_ + drx_) + "," +
@@ -129,6 +148,15 @@ void ScriptController::pub_scirpt_servoc() {
   urscript_pub_.publish(ur_script_);
 }
 
+void ScriptController::pub_scirpt() {
+  if (controller_mode == 0)
+    pub_scirpt_speedl();
+  else if (controller_mode == 1)
+    pub_scirpt_servoc();
+  else
+    ;
+}
+
 int main(int argc, char **argv) {
   // Initiate ROS
   ros::init(argc, argv, "script_br_node");
@@ -136,9 +164,10 @@ int main(int argc, char **argv) {
   // Create an object of class Multiplexer that will take care of everything
   ScriptController ScriptController;
   ROS_INFO("Script Controller ready");
-  ros::Rate rate(50);  // [Hz]
+  ros::Rate rate(ScriptController.get_rate());  // [Hz]
+
   while (ros::ok()) {
-    ScriptController.pub_scirpt_speedl();
+    ScriptController.pub_scirpt();
     ros::spinOnce();
     rate.sleep();
   }
