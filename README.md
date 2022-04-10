@@ -35,4 +35,17 @@ rosrun joy joy_node
 
 NOTE: the code is written for xbox family joysticks, i.e. D-Pad is interpreted as axis, not buttons.
 
-##
+## Pose control
+
+Run docker driver:
+
+```bash
+docker run -it --rm --net=host yuelindeng/ur_interface /bin/bash
+```
+
+Set UR arm to **remote** mode, then run the following command in side docker container:
+
+```bash
+source catkin_ws/devel/setup.bash
+roslaunch arm_controller single_ur3e_control.launch robot_ip:=192.168.0.102 robot_name:=left controller_mode:=1
+```

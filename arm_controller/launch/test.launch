@@ -1,4 +1,5 @@
 <launch>
+    <arg name="controller_mode" default = "0"/>
     <group>
         <node pkg='joy' name='joy1' type='joy_node' output="screen">
             <param name='dev' type='string' value='/dev/input/js0'/>
@@ -7,5 +8,6 @@
     <group ns="left">
         <node pkg="arm_controller" type="script_br_node" name="script_br" output="screen" />
         <rosparam file="$(find arm_controller)/config/default_config.yaml" command="load" ns="params"/>
+        <param name="controller_mode" value = "$(arg controller_mode)"/>
     </group>
 </launch>

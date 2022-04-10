@@ -4,7 +4,7 @@
   <arg name="reverse_port" default="50001" doc="Port that will be opened by the driver to allow direct communication between the driver and the robot controller."/>
   <arg name="script_sender_port" default="50002" doc="The driver will offer an interface to receive the program's URScript on this port. If the robot cannot connect to this port, `External Control` will stop immediately."/>
   <arg name="trajectory_port" default="50003" doc="Port that will be opened by the driver to allow trajectory forwarding."/>
-
+  <arg name="controller_mode" default = "0"/>
   <group ns="$(arg robot_name)">
     <!-- UR hardware bringup section -->
     <arg name="sim" default="false" />
@@ -36,7 +36,7 @@
 
     <node pkg="arm_controller" type="script_br_node" name="script_br" output="screen" />
     <rosparam file="$(find arm_controller)/config/default_config.yaml" command="load" ns="params"/>
-
+    <param name="controller_mode" value = "$(arg controller_mode)"/>
 
   </group>
 
