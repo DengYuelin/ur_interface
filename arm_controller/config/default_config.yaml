@@ -1,7 +1,14 @@
 /left/default_pose:
-    x: 0.15
-    y: -0.20
-    z: 0.45
-    rx: 0
+    x: 0.25
+    y: -0.025
+    z: 0.5
+    rx: 1.57079625
+    ry: 0
+    rz: 0
+/right/default_pose:
+    x: 0.25
+    y: 0.37
+    z: 0.5
+    rx: -1.57079625
     ry: 0
     rz: 0
