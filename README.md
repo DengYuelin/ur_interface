@@ -53,3 +53,12 @@ roslaunch arm_controller single_ur3e_control.launch robot_ip:=192.168.0.102 robo
 ```
 
 Pose control signals can be published to topic /left/pose_cmd
+
+### Running a second arm
+
+```bash
+docker run -it --rm --net=host yuelindeng/ur_interface /bin/bash
+
+source catkin_ws/devel/setup.bash
+roslaunch arm_controller single_ur16e_control.launch robot_ip:=192.168.0.105 robot_name:=right controller_mode:=1 reverse_port:=50011 script_sender_port:=50012 trajectory_port:=50013
+```
