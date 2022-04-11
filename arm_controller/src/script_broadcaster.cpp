@@ -2,7 +2,7 @@
 #include <sensor_msgs/Joy.h>
 #include <std_msgs/String.h>
 #include <std_srvs/SetBool.h>
-#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/Twist.h>
 
 const double deg2rad = 0.0174533;
 
@@ -11,7 +11,7 @@ class ScriptController {
   ScriptController();
   void set_param(double acc, double vel, double radius);
   void joy_callback(const sensor_msgs::Joy::ConstPtr &msg);
-  void cmd_callback(const geometry_msgs::Pose::ConstPtr &msg);
+  void cmd_callback(const geometry_msgs::Twist::ConstPtr &msg);
   int get_rate();
   void pub_scirpt_speedl();
   void pub_scirpt_servoc();
@@ -42,7 +42,7 @@ ScriptController::ScriptController() {
       "ur_hardware_interface/script_command", 1);
   joy_sub_ = nh_.subscribe<sensor_msgs::Joy>(
       "/joy", 1, &ScriptController::joy_callback, this);
-  cmd_sub_ = nh_.subscribe<geometry_msgs::Pose>(
+  cmd_sub_ = nh_.subscribe<geometry_msgs::Twist>(
       "pose_cmd", 1, &ScriptController::cmd_callback, this);
   send_script_ = false;
 
@@ -100,13 +100,13 @@ void ScriptController::joy_callback(const sensor_msgs::Joy::ConstPtr &msg) {
   }
 }
 
-void ScriptController::cmd_callback(const geometry_msgs::Pose::ConstPtr &msg) {
-  x_ = msg->position.x;
-  y_ = msg->position.y;
-  z_ = msg->position.z;
-  rx_ = 0;
-  ry_ = 0;
-  rz_ = 0;
+void ScriptController::cmd_callback(const geometry_msgs::Twist::ConstPtr &msg) {
+  x_ = msg->linear.x;
+  y_ = msg->linear.y;
+  z_ = msg->linear.z;
+  rx_ = msg->angular.x;
+  ry_ = msg->angular.y;
+  rz_ = msg->angular.z;
 }
 
 // servoc(pose, a=1.2, v=0.25, r=0)
