@@ -121,16 +121,3 @@ Connect docker with host (file)
 ```bash
 $ docker commit -m="Info" -a="author" containerID targetImageName[:tag]
 ```
-
-
-docker run -d \
-    --name="dockursim" \
-    -e ROBOT_MODEL=UR5 \
-    -p 8080:8080 \
-    -p 29999:29999 \
-    -p 30001-30004:30001-30004 \
-    -v /home/yuelin/space_ws/dockerursim:/ursim/programs \
-    -v dockursim:/ursim \
-    --privileged \
-    --cpus=1 \
-    arranhs/dockursim:latest
